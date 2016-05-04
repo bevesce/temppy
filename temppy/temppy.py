@@ -1,24 +1,3 @@
-"""Very simple and not that powerful template engine based on eval.
-
-{expression}
-
-{for variable in iterator}
-    this is {variable} inside for loop
-{endfor}
-
-{with variable1 = variable}
-this variable is assigned {variable1}
-
-{if variable2}
-    {variable2}
-{elif variable3}
-    {variable3}
-{else}
-    {default}
-{endif}
-
-"""
-
 import re
 
 
