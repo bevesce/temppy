@@ -1,7 +1,7 @@
 # temppy
 Very simple and not that powerful template engine based on eval. In under 200 lines.
 
-# Example:
+## Example:
 ```
 from temppy import render
 render({'number': 42}, 'this is a number {number}')
