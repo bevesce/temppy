@@ -37,3 +37,5 @@ You can set variable for later usage, like this:
 {with x = 1}
 x equals {x}
 ```
+
+Notice that *for-loop*, *if-elif-else* and *with* control statements are on separate lines! 
