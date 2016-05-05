@@ -58,11 +58,19 @@ class ForLoopTestCase(unittest.TestCase):
 {endfor}""")
         self.assertEqual(result, '1-3\n1-4\n2-3\n2-4')
 
-    def test_multiassignment(self):
-        result = render({'xs': [[1, 2], [3, 4]]}, """{for x, y in xs}
+    def test_nested_forloops(self):
+        result = render({}, """{for x, y in [[1, 2], [2, 3]]}
 {x}-{y}
 {endfor}""")
-        self.assertEqual(result, '1-2\n3-4')
+        self.assertEqual(result, '1-2\n2-3')
+
+    def test_for_cleans_up_after_itself(self):
+        result = render({'x': 'a'}, """{x}
+{for x in [1, 2]}
+{x}
+{endfor}
+{x}""")
+        self.assertEqual(result, 'a\n1\n2\na')
 
 
 
@@ -147,10 +155,16 @@ v: {x}-{y}
 {endfor}""")
         self.assertEqual(result, 'v: 1-2\nv: 2-3')
 
-    def test_multiassignment(self):
-        result = render({'xs': [1, 2]}, """{with x,y = xs}
+    def test_mutliassign(self):
+        result = render({}, """{with x = [1, 2]}
+{x}""")
+        self.assertEqual(result, '[1, 2]')
+        result = render({}, """{with x, y = [1, 2]}
 {x}-{y}""")
-        self.assertEqual(result, "1-2")
+        self.assertEqual(result, '1-2')
+        result = render({}, """{with x, y = [1, 2, 3]}
+{x}-{y}""")
+        self.assertEqual(result, '1-2')
 
 
 class ErrorTestCase(unittest.TestCase):

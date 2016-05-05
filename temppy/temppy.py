@@ -48,8 +48,8 @@ class WithStatement:
         self.line_number = line_number
 
     def render(self, data):
-        for key, value in lzip(self.keys, eval(self.value, data)):
-            data[key] = value
+        value = eval(self.value, data)
+        insert_value(data, self.keys, value)
         return None
 
 
@@ -69,22 +69,24 @@ class ForLoop:
 
     def render(self, data):
         results = []
-        self.save_values(data)
-        for values in leval(self.iterator, data, self.line_number):
-            for key, value in lzip(self.keys, values):
-                data[key] = value
+        self.save_value(data)
+        for value in leval(self.iterator, data, self.line_number):
+            self.insert_value(data, value)
             results.append(self.child.render(data))
-        self.resotre_values(data)
+        self.restore_value(data)
         return '\n'.join(results)
 
-    def save_values(self, data):
+    def save_value(self, data):
         self.prev_values = []
-        for key in self.keys:
-            self.prev_values.append(data.get(key, None))
+        for k in self.keys:
+            self.prev_values.append(data.get(k, None))
 
-    def resotre_values(self, data):
-        for key, prev_value in zip(self.keys, self.prev_values):
-            data[key] = prev_value
+    def insert_value(self, data, value):
+        insert_value(data, self.keys, value)
+
+    def restore_value(self, data):
+        for k, v in zip(self.keys, self.prev_values):
+            data[k] = v
 
 
 class IfStatement:
@@ -182,11 +184,9 @@ def leval(code, globals, line_number):
         raise EvaluationError(e, line_number)
 
 
-def lzip(v1, v2):
-    try:
-        return zip(v1, v2)
-    except TypeError:
-        try:
-            return zip([v1], v2)
-        except TypeError:
-            return zip(v1, [v2])
+def insert_value(data, keys, value):
+    if len(keys) == 1:
+        data[keys[0]] = value
+    else:
+        for k, v in zip(keys, value):
+            data[k] = v
