@@ -43,11 +43,13 @@ class WithStatement:
     pattern = re.compile('\s*{with (.*) = (.*)}\s*')
 
     def __init__(self, line, line_number):
-        self.key, self.value = self.pattern.match(line).groups()
+        raw_keys, self.value = self.pattern.match(line).groups()
+        self.keys = [k.strip() for k in raw_keys.split(',')]
         self.line_number = line_number
 
     def render(self, data):
-        data[self.key] = eval(self.value, data)
+        value = eval(self.value, data)
+        insert_value(data, self.keys, value)
         return None
 
 
@@ -56,7 +58,8 @@ class ForLoop:
     end_pattern = re.compile(r'\s*{endfor}\s*')
 
     def __init__(self, line, line_number):
-        self.key, self.iterator = self.start_pattern.match(line).groups()
+        raw_keys, self.iterator = self.start_pattern.match(line).groups()
+        self.keys = [k.strip() for k in raw_keys.split(',')]
         self.child = Block()
         self.line_number = line_number
         self.line = None
@@ -66,12 +69,24 @@ class ForLoop:
 
     def render(self, data):
         results = []
-        prev_value = data.get(self.key, None)
+        self.save_value(data)
         for value in leval(self.iterator, data, self.line_number):
-            data[self.key] = value
+            self.insert_value(data, value)
             results.append(self.child.render(data))
-        data[self.key] = prev_value
+        self.restore_value(data)
         return '\n'.join(results)
+
+    def save_value(self, data):
+        self.prev_values = []
+        for k in self.keys:
+            self.prev_values.append(data.get(k, None))
+
+    def insert_value(self, data, value):
+        insert_value(data, self.keys, value)
+
+    def restore_value(self, data):
+        for k, v in zip(self.keys, self.prev_values):
+            data[k] = v
 
 
 class IfStatement:
@@ -167,3 +182,11 @@ def leval(code, globals, line_number):
         return eval(code, globals)
     except Exception as e:
         raise EvaluationError(e, line_number)
+
+
+def insert_value(data, keys, value):
+    if len(keys) == 1:
+        data[keys[0]] = value
+    else:
+        for k, v in zip(keys, value):
+            data[k] = v
