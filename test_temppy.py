@@ -1,7 +1,7 @@
 import unittest
 from temppy import render
-from temppy import EvaluationError
-from temppy import ControlStructureError
+from temppy.temppy import EvaluationError
+from temppy.temppy import ControlStructureError
 
 
 class SimpleLineTestCase(unittest.TestCase):
@@ -57,6 +57,13 @@ class ForLoopTestCase(unittest.TestCase):
 {endfor}
 {endfor}""")
         self.assertEqual(result, '1-3\n1-4\n2-3\n2-4')
+
+    def test_multiassignment(self):
+        result = render({'xs': [[1, 2], [3, 4]]}, """{for x, y in xs}
+{x}-{y}
+{endfor}""")
+        self.assertEqual(result, '1-2\n3-4')
+
 
 
 class IfStatementTestCase(unittest.TestCase):
@@ -139,6 +146,11 @@ class WithStatementTestCase(unittest.TestCase):
 v: {x}-{y}
 {endfor}""")
         self.assertEqual(result, 'v: 1-2\nv: 2-3')
+
+    def test_multiassignment(self):
+        result = render({'xs': [1, 2]}, """{with x,y = xs}
+{x}-{y}""")
+        self.assertEqual(result, "1-2")
 
 
 class ErrorTestCase(unittest.TestCase):

@@ -43,11 +43,13 @@ class WithStatement:
     pattern = re.compile('\s*{with (.*) = (.*)}\s*')
 
     def __init__(self, line, line_number):
-        self.key, self.value = self.pattern.match(line).groups()
+        raw_keys, self.value = self.pattern.match(line).groups()
+        self.keys = [k.strip() for k in raw_keys.split(',')]
         self.line_number = line_number
 
     def render(self, data):
-        data[self.key] = eval(self.value, data)
+        for key, value in lzip(self.keys, eval(self.value, data)):
+            data[key] = value
         return None
 
 
@@ -56,7 +58,8 @@ class ForLoop:
     end_pattern = re.compile(r'\s*{endfor}\s*')
 
     def __init__(self, line, line_number):
-        self.key, self.iterator = self.start_pattern.match(line).groups()
+        raw_keys, self.iterator = self.start_pattern.match(line).groups()
+        self.keys = [k.strip() for k in raw_keys.split(',')]
         self.child = Block()
         self.line_number = line_number
         self.line = None
@@ -66,12 +69,22 @@ class ForLoop:
 
     def render(self, data):
         results = []
-        prev_value = data.get(self.key, None)
-        for value in leval(self.iterator, data, self.line_number):
-            data[self.key] = value
+        self.save_values(data)
+        for values in leval(self.iterator, data, self.line_number):
+            for key, value in lzip(self.keys, values):
+                data[key] = value
             results.append(self.child.render(data))
-        data[self.key] = prev_value
+        self.resotre_values(data)
         return '\n'.join(results)
+
+    def save_values(self, data):
+        self.prev_values = []
+        for key in self.keys:
+            self.prev_values.append(data.get(key, None))
+
+    def resotre_values(self, data):
+        for key, prev_value in zip(self.keys, self.prev_values):
+            data[key] = prev_value
 
 
 class IfStatement:
@@ -167,3 +180,13 @@ def leval(code, globals, line_number):
         return eval(code, globals)
     except Exception as e:
         raise EvaluationError(e, line_number)
+
+
+def lzip(v1, v2):
+    try:
+        return zip(v1, v2)
+    except TypeError:
+        try:
+            return zip([v1], v2)
+        except TypeError:
+            return zip(v1, [v2])
