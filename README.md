@@ -1,4 +1,7 @@
 # temppy
+
+![icon](icon.png)
+
 Very simple and not that powerful template engine based on eval. In under 200 lines.
 
 ## Example:
