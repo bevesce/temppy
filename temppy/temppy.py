@@ -166,8 +166,8 @@ class Parser:
 
 # Errors:
 class EvaluationError(Exception):
-    def __init__(self, message, line_number='?'):
-        message = 'at [{}]: {}'.format(line_number, message)
+    def __init__(self, message, line_number='?', code='?'):
+        message = 'at [{}] - {}: {}'.format(line_number, code, message)
         super(EvaluationError, self).__init__(message)
 
 
@@ -181,7 +181,7 @@ def leval(code, globals, line_number):
     try:
         return eval(code, globals)
     except Exception as e:
-        raise EvaluationError(e, line_number)
+        raise EvaluationError(e, line_number, code)
 
 
 def insert_value(data, keys, value):
